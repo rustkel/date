@@ -1,11 +1,11 @@
-//Date utils
-//Mostly for day counting between dates
+///Date utils
+///Mostly for day counting between dates
 
-//There are many ways to count dates; here I have chosen:
-//- Gregorian date from 1582 AD onwards
-//- Julian date before that (Proleptic Julian Calendar)
-//- No year 0
-//It is more interesting from a computational point of view!
+/// There are many ways to count dates; here I have chosen:
+/// - Gregorian date from 1582 AD onwards
+/// - Julian date before that (Proleptic Julian Calendar)
+/// - No year 0
+/// It is more interesting from a computational point of view!
 
 use std::fmt::{Display, Formatter};
 
@@ -48,6 +48,8 @@ impl Date {
         Self { year, month, day }
     }
 
+    /// Check if a Date is valid.
+    /// Example of the powerful *match tuple* Rust pattern
     pub fn is_valid(&self) -> Result<(), String> {
         match (self.year, self.month, self.day) {
             (0, _, _) => Err("Year 0 does not exist".into()),
@@ -68,6 +70,7 @@ impl Date {
         }
     }
 
+    /// Check if a year is a leap year
     pub fn is_leap(year: i32) -> bool {
         let mut y = year;
         if y < 0 { y += 1; } //no year 0
@@ -75,18 +78,22 @@ impl Date {
         y % 400 == 0 || (y % 4 == 0 && y % 100 != 0)
     }
 
+    /// How many days *year* has
     fn year_days(year: i32) -> i32 {
         if year == 0 { return 0 }
         if year == GREGORIAN_YEAR { return 355 }
         365 + if Date::is_leap(year) { 1 } else { 0 }
     }
 
+    /// Count the days a given month for a given year has.
+    /// Takes into account not only leap years, but also the Gregorian rift of 1582
     fn month_days(month: u8, year: i32) -> u32 {
         let mut bias = if month > 2 && Date::is_leap(year) { 1 } else { 0 };
         if year == GREGORIAN_YEAR && month > 9 { bias -= 10 }
         RUNNING_DAYS_PER_MONTH[month as usize - 1] + bias
     }
 
+    /// How many days have passed from Jan 1st of the given *Date*'s year
     pub fn day_of_year(&self) -> i32 {
         let mut days = Date::month_days(self.month, self.year) as i32;
         if self.year == GREGORIAN_YEAR && (self.month > 10
@@ -96,6 +103,7 @@ impl Date {
         days + self.day as i32
     }
 
+    /// How many days there are between two given *Date*s
     pub fn days_between_dates(first: &Date, last: &Date) -> Result<i32, String> {
         if let Err(error) = first.is_valid() {
             return Err(error);
@@ -172,6 +180,12 @@ fn test_days_between_dates() {
     let first = Date::new(1950, 1, 1);
     let last = Date::new(1950, 12, 31);
     assert_eq!(Date::days_between_dates(&first, &last), Ok(364));
+
+    let first = Date::new(1950, 1, 1);
+    let last = Date::new(1950, 1, 2);
+    assert_eq!(Date::days_between_dates(&first, &last), Ok(1));
+
+    assert_eq!(Date::days_between_dates(&first, &first), Ok(0));
 
     let first = Date::new(1980, 1, 1);
     let last = Date::new(1981, 1, 1);
